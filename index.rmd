@@ -65,7 +65,6 @@ head(normalized_counts) #normalized counts:
 rld <- rlog(dds, blind=TRUE)
 plotPCA(rld, intgroup="Treatment")
 pdf("./results/PlotPCA_dds.pdf")
-png("./results/PlotPCA_dds.png") #I'm not clear why the instructions say to save this as PDF, so I've also included it as a png file.
 dev.off()
 ```
 
@@ -230,7 +229,8 @@ dev.off()
 ```
 
 
-
+## Thank you!
+### Jake
 
 
 
