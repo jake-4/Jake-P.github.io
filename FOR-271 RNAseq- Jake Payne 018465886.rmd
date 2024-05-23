@@ -1,0 +1,149 @@
+---
+title: "FOR-271 RNAseq project"
+author:
+  - name: Jake Payne, 018465886
+output: html_document
+---
+
+In this project I will be using RStudio (v.4.4) to analyse RNAseq results, following the instructions available at https://zilanwen.github.io/RNA-Seq-Differential_Gene_Expression/.
+
+## Part 1: Preliminaries
+
+Loading the required libraries and setting up the data structure.
+
+```{r echo=T, message=FALSE, error=FALSE}
+library(edgeR)
+library(DESeq2)
+library(pheatmap)
+library(ggplot2)
+library(rmarkdown)
+library(knitr)
+```
+
+It's important to examine code and files before and during work, and I am grateful there are numerous "checks" included in the instructions, but for cleaner presentation here, I've commented most of them out.
+
+Data:
+```{r}
+
+setwd('C:/Users/Asus/Documents/FOR-271 RNAseq Project')
+Coinfection.targets<-read.delim("C:/Users/Asus/Documents/FOR-271 RNAseq Project/data/fileDesc.txt")
+rownames(Coinfection.targets)<-c("Ha1","Ha2","Ha3","Ctr1","Ctr2","Ctr3")
+Coinfection.orig <- readDGE(Coinfection.targets, header=F)
+#head(Coinfection.orig)
+Coinfection.rawCount <- Coinfection.orig$count
+#dim(Coinfection.rawCount)
+#head(Coinfection.rawCount)
+```
+
+Metadata:
+```{r}
+#setting up metadata
+Treatment <- factor(c(rep("Ha",3), rep("Ctr", 3)))
+meta <- data.frame(Treatment, row.names = colnames(Coinfection.orig$count))
+#colnames(Coinfection.orig$count)
+#rownames(meta)
+all(colnames(Coinfection.orig$count) %in% rownames(meta)) & all(rownames(meta) %in% colnames(Coinfection.orig$count)) 
+#^ A last final check to make sure row & column names match exactly
+```
+Setting up size factors and normalizing counts:
+```{r message =FALSE}
+dds <- DESeqDataSetFromMatrix(Coinfection.orig, colData = meta, design = ~ Treatment)
+#head(counts(dds))
+dds <- estimateSizeFactors(dds)
+normalized_counts <- counts(dds, normalized=TRUE)
+write.csv(normalized_counts, file="./results/coinfection_normalized_counts_DESeq2.csv")
+sizeFactors(dds) #the size factors each variable is normalized by:
+head(counts(dds)) #non normalized counts:
+head(normalized_counts) #normalized counts:
+```
+
+## Part 2: Performing QC
+
+### Principal Component Analysis
+
+```{r}
+rld <- rlog(dds, blind=TRUE)
+plotPCA(rld, intgroup="Treatment")
+pdf("./results/PlotPCA_dds.pdf")
+```
+
+From the above plot we can see that:
+
+- 1. In PC1 (which presumably corresponds to infection status), the two groups cluster strongly with one another- there is much more difference between groups than within them (and this PC alone explains 50% of variance).PC2 is strongly affected by an outlier in the control group- without it it probably would not be the second principal component. We could remove the outlier here, but otherwise we can probably ignore PC2 as if the outlier were removed all other differences would be negligible.
+
+- 2. PC1 very much fits the experimental expectation. It shows strong between-group differences, so we know that the treatment has an effect. PC2 is probably just a wildcard and does not affect our expectations.
+
+- 3. The axis labels show the amount of variance explained by each component (i.e., 50% for PC1, 25% for PC2)
+
+### Hierarchical clustering heatmap   
+
+```{r}
+rld_mat <- assay(rld) #convert to a form usable by pheatmap()
+rld_cor <- cor(rld_mat) #pairwise correlations
+head(rld_cor)
+
+head(meta)
+
+pheatmap(rld_cor, annotation = meta)
+pdf("./results/PlotHeatmap_dds.pdf")
+```
+
+Changing the heatmap's colours and borders to make it more readable:
+
+```{r}
+heat.colors <- RColorBrewer::brewer.pal(6, "Blues")
+pheatmap(rld_cor, annotation = meta, color = heat.colors, border_color=NA, fontsize = 10, 
+         fontsize_row = 10, height=20)
+```
+
+So again, we can see quite strong clustering between the three Ha samples, and between the first two controls (with Ctr3 again being an outlier). I really like the hierarchical tree that the graph displays along with the heatmap.
+
+
+### Differential Expression Analysis
+
+
+```{r}
+#getwd()
+#setwd("C:/Users/username/Desktop/RNA-seq_DEA")
+options(digits=3)
+infection.targets<-read.delim("./data/fileDesc.txt")
+infection.targets
+rownames(infection.targets)<-c("Ha1","Ha2","Ha3","Ctr1","Ctr2","Ctr3")
+infection.targets
+infection <- readDGE(infection.targets, header=F)
+#dim(infection)
+#head(infection)
+infection.rawCount <- infection$count
+#head(infection.rawCount)
+write.csv(infection.rawCount, file="./results/infection.rawCounts.csv") #moved this line as it makes more sense here IMO
+```
+
+Making a graph of Ha1's raw (unfiltered) counts (and exporting it):
+```{r}
+ggplot(infection.rawCount) +
+  geom_histogram(aes(x = Ha1), stat = "bin", bins = 200) +
+  xlab("Raw expression counts") +
+  ylab("Number of genes")
+png("./results/count distribution.png", res=300, height=1800, width=1800)
+ggplot(infection.rawCount) +
+  geom_histogram(aes(x = Ha1), stat = "bin", bins = 200) +
+  xlab("Raw expression counts") +
+  ylab("Number of genes")
+dev.off()
+```
+
+CPM before filtering:
+```{r}
+infection.normCPM <- cpm(calcNormFactors(infection)) #counts per mil
+dim(infection.normCPM)
+head(infection.normCPM)
+write.csv(infection.normCPM, file="./results/infection.normCPM.csv")
+infection.filtered <- rowSums(cpm(infection)>1) >=3
+```
+
+table(infection.filtered)
+infection$samples$lib.size
+Infection <- infection[infection.filtered,]
+dim(Infection)
+
+
