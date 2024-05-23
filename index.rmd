@@ -176,13 +176,13 @@ MDS versus PCA- MDS focuses on preserving pairwise distances, while PCA focuses 
 
 We can see that MDS has variance on only the Y axis, with *distance* on X. PCA has variance on both axes. 
 
-```{r}
+```{r warning = F}
 Infection <- estimateGLMCommonDisp(Infection, Infection.design)
 Infection <- estimateGLMTrendedDisp(Infection, Infection.design)
 Infection <- estimateGLMTagwiseDisp(Infection, Infection.design)
 ```
 
-```{ warning = F}
+```{r warning = F}
 plotMeanVar(Infection, show.tagwise.vars=T,NBline=T)
 plotBCV(Infection)
 Infection.fit <- glmFit(Infection, Infection.design)
@@ -214,14 +214,14 @@ abline(h=c(-1,1),col="dodgerblue")
 
 In an alternate colour:
 
-```{r}
+```{r warning = F}
 par(omi=c(0.1,0.1,0.1,0.1), las=1, cex=0.5, mgp=c(3,1,0), cex.main=1.8, cex.lab=1.4, cex.axis=1.4)
 plotSmear(lrt.Ha_vs_Ctr, xlab="log-counts per million (logCPM)", ylab="log2-fold change (log2FC)", main="a infection compared to Control", smearWidth=0.5, pch=21, cex=0.4, deCol="red", col=Infection.colHavsCtr, ylim=c(-7,7), yaxs="i")
 abline(h=c(-1,1),col="dodgerblue")
 ```
 
 Final export!
-```{r}
+```{r warning = F}
 png("./results/plotSmear.InfectionRNAseq.png", res=300, height=1800, width=1800)
 par(omi=c(0.1,0.1,0.1,0.1), las=1, cex=0.5, mgp=c(3,1,0), cex.main=1.8, cex.lab=1.4, cex.axis=1.4)
 plotSmear(lrt.Ha_vs_Ctr, xlab="log-counts per million (logCPM)", ylab="log2-fold change (log2FC)", main="Ha infection compared to Control", smearWidth=0.5, pch=21, cex=0.4, deCol="red", col=Infection.colHavsCtr, ylim=c(-7,7), yaxs="i")
