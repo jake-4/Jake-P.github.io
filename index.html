@@ -538,10 +538,25 @@ dim(infection.normCPM)</code></pre>
 ##   PITA_31484  0.00  0.00  0.00  0.00  0.00  0.00
 ##   PITA_22913  0.00  0.00  0.00  0.00  0.00  0.00
 ##   PITA_43120  5.06  5.09  2.15  4.78  2.36  1.24</code></pre>
-<pre class="r"><code>write.csv(infection.normCPM, file=&quot;./results/infection.normCPM.csv&quot;)
-infection.filtered &lt;- rowSums(cpm(infection)&gt;1) &gt;=3</code></pre>
-<p>table(infection.filtered) infection<span class="math inline">\(samples\)</span>lib.size Infection &lt;-
-infection[infection.filtered,] dim(Infection)</p>
+<pre class="r"><code>write.csv(infection.normCPM, file=&quot;./results/infection.normCPM.csv&quot;)</code></pre>
+<p>Filtering the infections data- expression must be in min. 1 CPM in
+min 3 libraries</p>
+<pre class="r"><code>infection.filtered &lt;- rowSums(cpm(infection)&gt;1) &gt;=3
+
+table(infection.filtered)</code></pre>
+<pre><code>## infection.filtered
+## FALSE  TRUE 
+## 25742 26009</code></pre>
+<pre class="r"><code>#infection$samples$lib.size
+Infection &lt;- infection[infection.filtered,] 
+#colSums(Infection$counts)
+#dim(Infection)
+Infection$samples$lib.size &lt;- colSums(Infection$counts)
+#Infection$samples
+Infection = calcNormFactors(Infection)
+#Infection$samples
+Infection.filtered.normCPM &lt;-cpm(calcNormFactors(Infection))
+write.csv(Infection.filtered.normCPM, file=&quot;./results/Infection.filtered.normCPM.csv&quot;)</code></pre>
 </div>
 </div>
 
