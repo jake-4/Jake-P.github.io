@@ -138,12 +138,23 @@ infection.normCPM <- cpm(calcNormFactors(infection)) #counts per mil
 dim(infection.normCPM)
 head(infection.normCPM)
 write.csv(infection.normCPM, file="./results/infection.normCPM.csv")
-infection.filtered <- rowSums(cpm(infection)>1) >=3
 ```
 
+Filtering the infections data- expression must be in min. 1 CPM in min 3 libraries
+```{r}
+infection.filtered <- rowSums(cpm(infection)>1) >=3
+
 table(infection.filtered)
-infection$samples$lib.size
-Infection <- infection[infection.filtered,]
-dim(Infection)
+#infection$samples$lib.size
+Infection <- infection[infection.filtered,] 
+#colSums(Infection$counts)
+#dim(Infection)
+Infection$samples$lib.size <- colSums(Infection$counts)
+#Infection$samples
+Infection = calcNormFactors(Infection)
+#Infection$samples
+Infection.filtered.normCPM <-cpm(calcNormFactors(Infection))
+write.csv(Infection.filtered.normCPM, file="./results/Infection.filtered.normCPM.csv")
+```
 
 
